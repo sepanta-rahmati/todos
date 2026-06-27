@@ -3,7 +3,7 @@ let todos = JSON.parse(window.localStorage.getItem('todos')) || [];
 for (const todo of todos) {
     list.innerHTML += add(todo);
 }
-
+const addTodoBtn = document.getElementById('addTodoBtn');
 const form = document.getElementById('addtodo');
 form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -26,6 +26,7 @@ form.addEventListener("submit", (event) => {
         }
     }
     resetForm();
+    hideForm();
 });
 
 function add(todo) {
@@ -56,6 +57,7 @@ function edit(id) {
     form.elements.id.value = todo.id;
     form.elements.text.value = todo.text;
     form.elements.done.checked = todo.done;
+    showForm();
 }
 
 function del(id) {
@@ -69,6 +71,17 @@ function del(id) {
 function save() {
     window.localStorage.setItem('todos', JSON.stringify(todos));
 }
+
+function showForm() {
+    form.classList.remove('d-none');
+    addTodoBtn.classList.add('d-none');
+}
+
+function hideForm() {
+    form.classList.add('d-none');
+    addTodoBtn.classList.remove('d-none');
+}
+
 
 function uuidv4() {
     return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
