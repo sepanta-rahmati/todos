@@ -1,8 +1,10 @@
+const baseUrl = "http://localhost:3000";
+let todos;
 const list = document.getElementById('list');
 getData();
-let todos;
 const addTodoBtn = document.getElementById('addTodoBtn');
 const form = document.getElementById('addtodo');
+
 form.addEventListener("submit", async (event) => {
     try {
         event.preventDefault();
@@ -10,17 +12,13 @@ form.addEventListener("submit", async (event) => {
         const id = formData.get('id');
         const text = formData.get('text').trim();
         const done = Boolean(formData.get('done'));
+        let todo = { text, done }
         if (id) {
-            const todo = todos.find(t => t.id === id);
-            todo.text = text;
-            todo.done = done;
-            await save();
+            await connect(`${baseUrl}/${id}`, 'PUT', JSON.stringify(todo))
             document.getElementById(id).outerHTML = add(todo);
         } else {
             if (text) {
-                const todo = { id: uuidv4(), text, done };
-                todos.push(todo);
-                await save();
+                todo = await connect(baseUrl, 'POST', JSON.stringify(todo))
                 list.innerHTML += add(todo);
             }
         }
@@ -31,6 +29,30 @@ form.addEventListener("submit", async (event) => {
         console.error('Submit error:', error)
     }
 });
+
+async function connect(url, method, body) {
+    try {
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body
+        });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text();
+        }
+    } catch (error) {
+        console.error(error.message);
+        throw error;
+    }
+}
 
 function add(todo) {
     return `<tr id=${todo.id}>
@@ -49,9 +71,9 @@ function resetForm() {
 }
 
 async function check(cb, id) {
-    const todo = todos.find(t => t.id === id);
-    todo.done = cb.checked;
-    await save();
+    const todo = { done: cb.checked }
+    const url = `${baseUrl}/${id}`;
+    await connect(url, 'PATCH', JSON.stringify(todo))
 }
 
 function edit(id) {
@@ -65,30 +87,12 @@ function edit(id) {
 
 async function del(id) {
     if (confirm('Are you sure?')) {
-        todos = todos.filter(t => t.id != id);
-        await save();
+        const url = `${baseUrl}/${id}`;
+        await connect(url, 'DELETE');
         document.getElementById(id).remove();
     }
 }
 
-async function save() {
-    const url = "http://localhost:3000";
-    try {
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify(todos)
-        });
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-        }
-    } catch (error) {
-        console.error(error.message);
-        throw error;
-    }
-}
 
 function showForm() {
     form.classList.remove('d-none');
@@ -100,25 +104,9 @@ function hideForm() {
     addTodoBtn.classList.remove('d-none');
 }
 
-
-function uuidv4() {
-    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-        (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
-    );
-}
-
 async function getData() {
-    const url = "http://localhost:3000";
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-        }
-        todos = await response.json() || [];
-        for (const todo of todos) {
-            list.innerHTML += add(todo);
-        }
-    } catch (error) {
-        console.error(error.message);
+    todos = await connect(baseUrl, 'GET') || []
+    for (const todo of todos) {
+        list.innerHTML += add(todo);
     }
 }
