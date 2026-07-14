@@ -15,7 +15,7 @@
     <h1>Let's do it!</h1>
     <button id="addTodoBtn" class="btn btn-success p-1" onclick="showForm()"><i class="bi bi-plus fs-3"></i></button>
     <form id="addtodo" class="border p-3 d-none">
-        <input name="id" type="hidden" />
+        <input name="_id" type="hidden" />
         <div class="mb-3">
             <label for="text" class="form-label">Todo Text:</label>
             <textarea class="form-control" id="text" name="text"></textarea>
@@ -25,7 +25,7 @@
             <label class="form-check-label" for="done">Already done?</label>
         </div>
         <button type="submit" class="btn btn-outline-primary">Submit</button>
-        <button class="btn btn-light" onclick="hideForm()">Cancel</button>
+        <button type="button" class="btn btn-light" onclick="resetForm(); hideForm()">Cancel</button>
     </form>
 
     <table class="table table-striped">

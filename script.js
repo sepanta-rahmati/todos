@@ -9,7 +9,7 @@ form.addEventListener("submit", async (event) => {
     try {
         event.preventDefault();
         const formData = new FormData(form);
-        const id = formData.get('id');
+        const id = formData.get('_id');
         const text = formData.get('text').trim();
         const done = Boolean(formData.get('done'));
         let todo = { text, done }
@@ -55,19 +55,19 @@ async function connect(url, method, body) {
 }
 
 function add(todo) {
-    return `<tr id=${todo.id}>
-    <td><input type="checkbox" ${todo.done ? 'checked' : ''} onchange="check(this, '${todo.id}')" /></td>
+    return `<tr id=${todo._id}>
+    <td><input type="checkbox" ${todo.done ? 'checked' : ''} onchange="check(this, '${todo._id}')" /></td>
     <td>${todo.text}</td>
     <td>
-        <i class="bi bi-pencil-square text-primary" onclick="edit('${todo.id}')"></i> 
-        <i class="bi bi-trash text-danger" onclick="del('${todo.id}')"></i>
+        <i class="bi bi-pencil-square text-primary" onclick="edit('${todo._id}')"></i> 
+        <i class="bi bi-trash text-danger" onclick="del('${todo._id}')"></i>
     </td> 
     </tr>`;
 }
 
 function resetForm() {
     form.reset();
-    form.elements.id.value = '';
+    form.elements._id.value = '';
 }
 
 async function check(cb, id) {
@@ -77,12 +77,15 @@ async function check(cb, id) {
 }
 
 function edit(id) {
-    const todo = todos.find(t => t.id === id);
-
-    form.elements.id.value = todo.id;
-    form.elements.text.value = todo.text;
-    form.elements.done.checked = todo.done;
-    showForm();
+    const todo = todos.find(t => t._id === id);
+    if (todo) {
+        form.elements._id.value = todo._id;
+        form.elements.text.value = todo.text;
+        form.elements.done.checked = todo.done;
+        showForm();
+    } else {
+        console.error(`Todo with id ${id} not found.`, todos);
+    }
 }
 
 async function del(id) {
