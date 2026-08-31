@@ -50,6 +50,8 @@ const saveServerBtn = document.getElementById('saveServerBtn');
 const loadingOverlay = document.getElementById('loadingOverlay');
 const loadingText = document.getElementById('loadingText');
 const alertContainer = document.getElementById('alertContainer');
+const showAllDataBtn = document.getElementById('showAllDataBtn');
+const allDataModal = new bootstrap.Modal(document.getElementById('allDataModal'));
 
 // ===== Utility Functions =====
 
@@ -375,7 +377,7 @@ async function addTodo(text) {
  * Toggle done status
  */
 async function toggleDone(id) {
-    const todo = state.todos.find(t => t.id === id);
+    const todo = state.todos.find(t => t.id === id || t._id === id);
     if (!todo) return;
     
     const newDoneStatus = !todo.done;
@@ -390,7 +392,7 @@ async function toggleDone(id) {
     showLoading('Updating...');
     
     try {
-        await apiRequest(`/api/todos/${id}`, {
+        await apiRequest(`/api/todos/${todo._id || id}`, {
             method: 'PATCH',
             body: { done: newDoneStatus }
         });
@@ -408,7 +410,7 @@ async function toggleDone(id) {
  * Edit todo
  */
 async function editTodo(id) {
-    const todo = state.todos.find(t => t.id === id);
+    const todo = state.todos.find(t => t.id === id || t._id === id);
     if (!todo) return;
     
     const newText = prompt('Edit task:', todo.text);
@@ -424,7 +426,7 @@ async function editTodo(id) {
     showLoading('Updating...');
     
     try {
-        await apiRequest(`/api/todos/${id}`, {
+        await apiRequest(`/api/todos/${todo._id || id}`, {
             method: 'PATCH',
             body: { text: sanitizeInput(newText.trim()) }
         });
@@ -446,7 +448,7 @@ async function deleteTodo(id) {
     if (!confirm('Are you sure you want to delete this task?')) return;
     
     if (state.isDemoMode) {
-        state.todos = state.todos.filter(t => t.id !== id);
+        state.todos = state.todos.filter(t => t.id !== id && t._id !== id);
         saveDemoTodos();
         renderTodos();
         return;
@@ -459,7 +461,7 @@ async function deleteTodo(id) {
             method: 'DELETE'
         });
         
-        state.todos = state.todos.filter(t => t.id !== id);
+        state.todos = state.todos.filter(t => t.id !== id && t._id !== id);
         renderTodos();
         showAlert('Task deleted!', 'success');
     } catch (error) {
@@ -572,6 +574,83 @@ function loadDemoTodos() {
     } catch (error) {
         console.error('Error loading demo todos:', error);
     }
+}
+
+// ===== Show All Data Functions =====
+
+/**
+ * Show all data modal
+ */
+function showAllData() {
+    // Update user data
+    const userDataPre = document.getElementById('userDataPre');
+    userDataPre.textContent = JSON.stringify(state.user, null, 2);
+    
+    // Update token data
+    const tokenTextarea = document.getElementById('tokenTextarea');
+    tokenTextarea.value = state.token || 'No token (demo mode)';
+    
+    // Update todos data
+    const todosDataPre = document.getElementById('todosDataPre');
+    todosDataPre.textContent = JSON.stringify(state.todos, null, 2);
+    
+    // Update server config
+    document.getElementById('serverConfigInput').value = state.serverUrl;
+    document.getElementById('demoModeInput').value = state.isDemoMode ? 'Yes' : 'No';
+    document.getElementById('lastSyncInput').value = new Date().toLocaleString();
+    
+    // Update statistics
+    const total = state.todos.length;
+    const completed = state.todos.filter(t => t.done).length;
+    const pending = total - completed;
+    const avgLength = total > 0 ? Math.round(state.todos.reduce((sum, t) => sum + t.text.length, 0) / total) : 0;
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statAvgLength').textContent = avgLength;
+    
+    allDataModal.show();
+}
+
+/**
+ * Copy text to clipboard
+ */
+function copyToClipboard(text, elementId) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(elementId);
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i>';
+        btn.title = 'Copied!';
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.title = 'Copy to clipboard';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showAlert('Failed to copy to clipboard', 'danger');
+    });
+}
+
+/**
+ * Refresh data in modal
+ */
+function refreshAllData() {
+    showAllData();
+    showAlert('Data refreshed!', 'success');
+}
+
+/**
+ * Toggle dark/light theme
+ */
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-bs-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-bs-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    showAlert(`${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} mode enabled!`, 'success');
 }
 
 // ===== Render Functions =====
@@ -734,6 +813,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDemoTodos();
     }
     
+    // Load theme preference
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    
     // Update UI
     updateUI();
     
@@ -758,6 +841,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Logout
     logoutBtn.addEventListener('click', logout);
+    
+    // Show all data
+    showAllDataBtn.addEventListener('click', showAllData);
     
     // Todo form
     todoForm.addEventListener('submit', (e) => {
@@ -788,6 +874,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     saveServerBtn.addEventListener('click', updateServerUrl);
+    
+    // Copy buttons
+    document.getElementById('copyTokenBtn').addEventListener('click', () => {
+        copyToClipboard(document.getElementById('tokenTextarea').value, 'copyTokenBtn');
+    });
+    
+    document.getElementById('copyServerBtn').addEventListener('click', () => {
+        copyToClipboard(document.getElementById('serverConfigInput').value, 'copyServerBtn');
+    });
+    
+    document.getElementById('refreshDataBtn').addEventListener('click', refreshAllData);
+    
+    // Theme toggle
+    document.getElementById('toggleTheme').addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleTheme();
+    });
     
     // Auto-focus
     if (state.token && state.user) {
