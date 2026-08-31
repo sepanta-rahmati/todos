@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App - Simple & Effective</title>
+    <title>Todo App - With Backend</title>
     
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -23,75 +23,220 @@
                 <h1 class="display-4 fw-bold text-primary mb-2">
                     <i class="bi bi-check2-square me-2"></i>Todo App
                 </h1>
-                <p class="lead text-muted mb-4">Simple. Fast. Effective.</p>
+                <p class="lead text-muted mb-0">Organize your tasks with backend sync</p>
             </header>
 
-            <!-- Main Card -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-plus-circle me-2"></i>Add New Task
-                    </h5>
-                </div>
-                
-                <div class="card-body">
-                    <!-- Add Todo Form -->
-                    <form id="addTodoForm" class="mb-4">
-                        <div class="input-group">
-                            <textarea 
-                                id="todoText" 
-                                class="form-control form-control-lg" 
-                                placeholder="What needs to be done?..." 
-                                rows="1"
-                                maxlength="200"
-                                required
-                                autofocus
-                            ></textarea>
-                            <button type="submit" class="btn btn-primary btn-lg px-4">
-                                <i class="bi bi-send me-1"></i> Add
-                            </button>
+            <!-- User Bar (shown when logged in) -->
+            <div id="userBar" class="d-none mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-semibold" id="userEmail"></span>
+                            <span class="badge bg-success ms-2">Logged In</span>
                         </div>
-                        <div class="form-text text-muted text-end">Press Enter to add</div>
-                    </form>
-
-                    <!-- Toggle Button -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="fw-semibold text-muted">
-                            <span id="todoCount">0 tasks</span>
-                            <span id="completedCount" class="text-success ms-2"></span>
-                        </div>
-                        <button id="toggleTodosBtn" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-eye me-1"></i> <span id="toggleText">Hide Todos</span>
-                        </button>
-                    </div>
-
-                    <!-- Todo List -->
-                    <div id="todoListContainer" class="todo-list">
-                        <div id="todoList" class="list-group list-group-flush"></div>
-                        
-                        <!-- Empty State -->
-                        <div id="emptyState" class="text-center py-5 text-muted" style="display: none;">
-                            <i class="bi bi-inbox fs-1 mb-3"></i>
-                            <h5>No tasks yet</h5>
-                            <p class="mb-0">Add your first task above!</p>
-                        </div>
-                    </div>
-
-                    <!-- Bulk Actions -->
-                    <div class="mt-3 d-flex gap-2">
-                        <button id="clearCompletedBtn" class="btn btn-sm btn-outline-danger flex-fill">
-                            <i class="bi bi-trash me-1"></i> Clear Completed
-                        </button>
-                        <button id="clearAllBtn" class="btn btn-sm btn-outline-danger flex-fill">
-                            <i class="bi bi-trash-fill me-1"></i> Clear All
+                        <button id="logoutBtn" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
                         </button>
                     </div>
                 </div>
             </div>
 
+            <!-- Auth Section (shown when logged out) -->
+            <div id="authSection">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light d-flex justify-content-between">
+                        <ul class="nav nav-tabs card-header-tabs" id="authTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="loginTab" data-bs-toggle="tab" 
+                                        data-bs-target="#loginForm" type="button" role="tab">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="signupTab" data-bs-toggle="tab" 
+                                        data-bs-target="#signupForm" type="button" role="tab">
+                                    <i class="bi bi-person-plus me-1"></i> Sign Up
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="tab-content" id="authTabContent">
+                            <!-- Login Form -->
+                            <div class="tab-pane fade show active" id="loginForm" role="tabpanel">
+                                <form id="loginFormElement" class="row g-3">
+                                    <div class="col-12">
+                                        <label for="loginEmail" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="loginEmail" 
+                                               placeholder="Enter your email" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="loginPassword" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="loginPassword" 
+                                               placeholder="Enter your password" required>
+                                    </div>
+                                    <div class="col-12 d-grid">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Signup Form -->
+                            <div class="tab-pane fade" id="signupForm" role="tabpanel">
+                                <form id="signupFormElement" class="row g-3">
+                                    <div class="col-12">
+                                        <label for="signupName" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="signupName" 
+                                               placeholder="Enter your name">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="signupEmail" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="signupEmail" 
+                                               placeholder="Enter your email" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="signupPassword" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="signupPassword" 
+                                               placeholder="Enter your password" minlength="8" required>
+                                        <div class="form-text text-muted">Minimum 8 characters</div>
+                                    </div>
+                                    <div class="col-12 d-grid">
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="bi bi-person-plus me-1"></i> Sign Up
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-light text-center">
+                        <button id="tryDemoBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-lightbulb me-1"></i> Try Demo Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main App Section (shown when logged in) -->
+            <div id="appSection" class="d-none">
+                <!-- Todo Form -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-circle me-2"></i>Add New Task
+                        </h5>
+                    </div>
+                    
+                    <div class="card-body">
+                        <form id="addTodoForm" class="mb-4">
+                            <div class="input-group">
+                                <textarea 
+                                    id="todoText" 
+                                    class="form-control form-control-lg" 
+                                    placeholder="What needs to be done?..." 
+                                    rows="1"
+                                    maxlength="200"
+                                    required
+                                    autofocus
+                                ></textarea>
+                                <button type="submit" class="btn btn-primary btn-lg px-4">
+                                    <i class="bi bi-send me-1"></i> Add
+                                </button>
+                            </div>
+                            <div class="form-text text-muted text-end">Press Enter to add</div>
+                        </form>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="fw-semibold text-muted">
+                                <span id="todoCount">0 tasks</span>
+                                <span id="completedCount" class="text-success ms-2"></span>
+                            </div>
+                            <button id="toggleTodosBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye me-1"></i> <span id="toggleText">Hide Todos</span>
+                            </button>
+                        </div>
+
+                        <div id="todoListContainer" class="todo-list">
+                            <div id="todoList" class="list-group list-group-flush"></div>
+                            <div id="emptyState" class="text-center py-5 text-muted" style="display: none;">
+                                <i class="bi bi-inbox fs-1 mb-3"></i>
+                                <h5>No tasks yet</h5>
+                                <p class="mb-0">Add your first task above!</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 d-flex gap-2">
+                            <button id="clearCompletedBtn" class="btn btn-sm btn-outline-danger flex-fill">
+                                <i class="bi bi-trash me-1"></i> Clear Completed
+                            </button>
+                            <button id="clearAllBtn" class="btn btn-sm btn-outline-danger flex-fill">
+                                <i class="bi bi-trash-fill me-1"></i> Clear All
+                            </button>
+                            <button id="syncBtn" class="btn btn-sm btn-outline-primary flex-fill">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Sync
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server Status -->
+                <div id="serverStatus" class="d-none mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body d-flex align-items-center gap-2">
+                            <span class="badge bg-success" id="statusBadge">Connected</span>
+                            <span class="text-muted small">Server: <span id="serverUrl">http://localhost:3000</span></span>
+                            <button id="changeServerBtn" class="btn btn-sm btn-outline-secondary ms-auto">
+                                <i class="bi bi-gear me-1"></i> Change
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Server Config Modal -->
+            <div class="modal fade" id="serverModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Server Configuration</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="serverUrlInput" class="form-label">Server URL</label>
+                                <input type="url" class="form-control" id="serverUrlInput" 
+                                       placeholder="http://localhost:3000" value="http://localhost:3000">
+                                <div class="form-text text-muted">Enter your backend server URL</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="saveServerBtn">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-50 d-flex align-items-center justify-content-center">
+                <div class="text-center text-white">
+                    <div class="spinner-border text-white mb-2" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="loadingText">Loading...</h5>
+                </div>
+            </div>
+
+            <!-- Alert Container -->
+            <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1000;"></div>
+
             <!-- Footer -->
             <footer class="text-center mt-4 text-muted small">
-                <p>Your todos are saved locally in your browser</p>
+                <p>Todo App with Backend Sync</p>
             </footer>
         </div>
     </div>
